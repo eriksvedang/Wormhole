@@ -32,12 +32,12 @@ use opengl_graphics::{
 };
 
 fn main() {
-    let (width, height) = (300, 300);
+    let (mut width, mut height) = (940, 280);
     let opengl = shader_version::opengl::OpenGL_3_2;
     let window = Sdl2Window::new(
         opengl,
         WindowSettings {
-            title: "Sprite".to_string(),
+            title: "Wormhole".to_string(),
             size: [width, height],
             fullscreen: false,
             exit_on_esc: true,
@@ -77,21 +77,29 @@ fn main() {
 
     let ref mut gl = Gl::new(opengl);
     let window = RefCell::new(window);
+    
     for e in Events::new(&window) {
-        use event::{ PressEvent, RenderEvent };
+        use event::{ PressEvent, RenderEvent, ResizeEvent };
 
         scene.event(&e);
+
+        e.resize(|w,h| {
+            width = w;
+            height = h;
+            println!("new w = {}, new h = {}", w, h);
+        });
 
         e.render(|args| {
             use graphics::*;
 
             gl.viewport(0, 0, args.width as i32, args.height as i32);
 
-            let c = Context::abs(args.width as f64, args.width as f64);
-            c.rgb(1.0, 1.0, 1.0).draw(gl);
+            let c = Context::abs(args.width as f64, args.height as f64);
+            c.rgb(1.0, 0.9, 1.0).draw(gl);
 
             scene.draw(&c, gl);
         });
+        
         e.press(|_| {
             scene.toggle(id, &seq);
             scene.toggle(id, &rotate);
