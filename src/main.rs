@@ -100,6 +100,8 @@ fn main() {
                 let speed = 300.0;
                 let dt = args.dt as f64;
                 game.player.pos = (x + angle.cos() * speed * dt, y + angle.sin() * speed * dt);
+                let (newX, newY) = game.player.pos;
+                game.player.pos = (wrap(newX, width as f64), wrap(newY, height as f64))
             }            
         });
 
@@ -111,7 +113,7 @@ fn main() {
             c.rgb(1.0, 0.9, 1.0).draw(gl);
 
             let (x, y) = game.player.pos;
-            draw_entity(&game.player, &c, &linkTexture, gl);
+            draw_entity(&game.player, &c, &linkTexture, gl, (width, height));
             //scene.child_mut(link_sprite_id).unwrap().set_position(x as f64, y as f64);
             //scene.draw(&c, gl);   
         });
@@ -169,8 +171,41 @@ fn main() {
         });
     }
 
-    fn draw_entity( e: &Entity, c: &Context, image: &Texture, gl: &mut Gl) {
+    fn draw_entity( e: &Entity, c: &Context, image: &Texture, gl: &mut Gl, size: (u32,u32)) {
+        let (width, height) = size;
+        let width = width as f64;
+        let height = height as f64;
         let (x,y) = e.pos;
+        
+        draw_image_at(e.pos, c, image, gl);
+
+        draw_image_at((x + width, y), c, image, gl);
+        draw_image_at((x - width, y), c, image, gl);
+        draw_image_at((x, y + height), c, image, gl);
+        draw_image_at((x, y - height), c, image, gl);
+        //draw_image_at((wrap(x, width), wrap(y, height)), c, image, gl);
+
+
+          //  draw_image_at(e.pos, c, image, gl);
+          //  draw_image_at(e.pos, c, image, gl);
+
+
+    }
+    
+    fn wrap(val: f64, size: f64) -> f64
+    {
+        let x = if(val > 0.0){
+            0.0
+        }else{
+            size
+        };
+        val % size + x
+
+
+    }
+
+    fn draw_image_at(pos: (f64,f64), c: &Context, image: &Texture, gl: &mut Gl) {
+        let (x,y) = pos;
         let (_, h) = image.get_size();
         let h = h as f64;
         c   .image(image)
@@ -183,8 +218,9 @@ fn main() {
             .trans(x, y)
             .draw(gl);
 
-        
+
     }
+
 
     fn set_speed_entity(e: &mut Entity, dir: (f64, f64)) {
         match dir {
