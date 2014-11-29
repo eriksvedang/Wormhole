@@ -34,12 +34,12 @@ use opengl_graphics::{
 };
 
 struct Entity {
-    pos: (f32, f32),
-    speed: (f32, f32)
+    pos: (f64, f64),
+    speed: (f64, f64)
 }
 
 impl Entity {
-    fn new(x: f32, y: f32) -> Entity {
+    fn new(x: f64, y: f64) -> Entity {
         Entity {
             pos: (x, y),
             speed: (0.0, 0.0)
@@ -71,7 +71,9 @@ fn main() {
     let mut link_sprite = Sprite::from_texture(tex.clone());
     link_sprite.set_position(0.0 as f64, 0.0 as f64);
     
-    let link_sprite_id = scene.add_child(link_sprite);
+    //let link_sprite_id = scene.add_child(link_sprite);
+
+    let image = Texture::from_path(&Path::new("./Link.png")).unwrap();
 
     let window = RefCell::new(window);
     let ref mut gl = Gl::new(opengl);
@@ -82,7 +84,8 @@ fn main() {
     
     for e in Events::new(&window) {
         use event::{ PressEvent, ReleaseEvent, RenderEvent, ResizeEvent, UpdateEvent };
-
+        use input::keyboard::Key;
+        
         scene.event(&e);
 
         e.resize(|w,h| {
@@ -92,11 +95,16 @@ fn main() {
         });
 
         e.update(|args| {
+            use std::num::FloatMath;
             //println!("Update {}", args.dt);
             let (x, y) = game.player.pos;
             let (dx, dy) = game.player.speed;
-            let dt = args.dt as f32;
-            game.player.pos = (x + dx * dt, y + dy * dt);
+            if dx != 0.0 || dy != 0.0 {
+                let angle = dy.atan2(dx);
+                let speed = 300.0;
+                let dt = args.dt as f64;
+                game.player.pos = (x + angle.cos() * speed * dt, y + angle.sin() * speed * dt);
+            }            
         });
 
         e.render(|args| {
@@ -108,19 +116,39 @@ fn main() {
             c.rgb(1.0, 0.9, 1.0).draw(gl);
 
             let (x, y) = game.player.pos;
-            scene.child_mut(link_sprite_id).unwrap().set_position(x as f64, y as f64);
+            //scene.child_mut(link_sprite_id).unwrap().set_position(x as f64, y as f64);
 
-            scene.draw(&c, gl);
+            //scene.draw(&c, gl);
+
+            let h = image.get_height() as f64;
+            
+            c   .image(&image)
+                .trans(x + 3.0, y + h - 0.3 * h)
+                .scale(1.0, 0.3)
+                .rgb(0.5, 0.5, 0.5)
+                .draw(gl);
+                
+            c   .image(&image)
+                .trans(x, y)
+                .draw(gl);
+            
         });
         
         e.press(|key| {
             //println!("Key = {}", key);
-            match(key) {
-                input::Keyboard( input::keyboard::Key::A ) => {
-                    set_speed_entity(&mut game.player, (-300.0, 0.0))
+            let (dx, dy) = game.player.speed;
+            match key {
+                input::Keyboard( Key::A ) => {
+                    set_speed_entity(&mut game.player, (-1.0, dy))
                 }
-                input::Keyboard( input::keyboard::Key::D ) => {
-                    set_speed_entity(&mut game.player, (300.0, 0.0))
+                input::Keyboard( Key::D ) => {
+                    set_speed_entity(&mut game.player, (1.0, dy))
+                }
+                input::Keyboard( Key::W ) => {
+                    set_speed_entity(&mut game.player, (dx, -1.0))
+                }
+                input::Keyboard( Key::S ) => {
+                    set_speed_entity(&mut game.player, (dx, 1.0))
                 }
                 _ => {
                     println! ("No key match");
@@ -129,12 +157,27 @@ fn main() {
         });
 
         e.release(|key| {
+            let (dx, dy) = game.player.speed;
             match(key) {
-                input::Keyboard( input::keyboard::Key::A ) => {
-                    set_speed_entity(&mut game.player, (0.0, 0.0))
+                input::Keyboard( Key::A ) => {
+                    if(dx < 0.0) {
+                        set_speed_entity(&mut game.player, (0.0, dy))
+                    }                    
                 }
-                input::Keyboard( input::keyboard::Key::D ) => {
-                    set_speed_entity(&mut game.player, (0.0, 0.0))
+                input::Keyboard( Key::D ) => {
+                    if(dx > 0.0) {
+                        set_speed_entity(&mut game.player, (0.0, dy))
+                    }
+                }
+                input::Keyboard( Key::W ) => {
+                    if(dy < 0.0) {
+                        set_speed_entity(&mut game.player, (dx, 0.0))
+                    }
+                }
+                input::Keyboard( Key::S ) => {
+                    if(dy > 0.0) {
+                        set_speed_entity(&mut game.player, (dx, 0.0))
+                    }
                 }
                 _ => {
                     println! ("No key match");
@@ -143,7 +186,7 @@ fn main() {
         });
     }
 
-    fn set_speed_entity(e: &mut Entity, dir: (f32, f32)) {
+    fn set_speed_entity(e: &mut Entity, dir: (f64, f64)) {
         match dir {
             (dx,dy) => { e.speed = (dx, dy); }
         }        
