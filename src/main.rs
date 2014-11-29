@@ -49,10 +49,18 @@ fn main() {
     let tex = Path::new("./rust-logo.png");
     let tex = Rc::new(Texture::from_path(&tex).unwrap());
     let mut sprite = Sprite::from_texture(tex.clone());
+    let mut sprite2 = Sprite::from_texture(tex.clone());
     sprite.set_position(width as f64 / 2.0, height as f64 / 2.0);
-
+    sprite2.set_position(0.0, 0.0);
+    
     let id = scene.add_child(sprite);
+    let id2 = scene.add_child(sprite2);
 
+    let seq2 = Sequence(vec![
+        Action(Blink(1.0, 5))
+    ]);
+    scene.run(id2, &seq2);
+    
     // Run a sequence or animations.
     let seq = Sequence(vec![
         Action(Ease(EaseCubicOut, box ScaleTo(2.0, 0.5, 0.5))),
@@ -100,7 +108,8 @@ fn main() {
             scene.draw(&c, gl);
         });
         
-        e.press(|_| {
+        e.press(|key| {
+            println!("Key = {}", key);
             scene.toggle(id, &seq);
             scene.toggle(id, &rotate);
         });
