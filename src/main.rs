@@ -56,33 +56,6 @@ fn main() {
     let id = scene.add_child(sprite);
     let id2 = scene.add_child(sprite2);
 
-    let seq2 = Sequence(vec![
-        Action(Blink(1.0, 5))
-    ]);
-    scene.run(id2, &seq2);
-    
-    // Run a sequence or animations.
-    let seq = Sequence(vec![
-        Action(Ease(EaseCubicOut, box ScaleTo(2.0, 0.5, 0.5))),
-        Action(Ease(EaseBounceOut, box MoveBy(1.0, 0.0, 100.0))),
-        Action(Ease(EaseElasticOut, box MoveBy(2.0, 0.0, -100.0))),
-        Action(Ease(EaseBackInOut, box MoveBy(1.0, 0.0, -100.0))),
-        Wait(0.5),
-        Action(Ease(EaseExponentialInOut, box MoveBy(1.0, 0.0, 100.0))),
-        Action(Blink(1.0, 5)),
-        While(box WaitForever, vec![
-            Action(Ease(EaseQuadraticIn, box FadeOut(1.0))),
-            Action(Ease(EaseQuadraticOut, box FadeIn(1.0))),
-        ]),
-    ]);
-    scene.run(id, &seq);
-
-    // This animation and the one above can run in parallel.
-    let rotate = Action(Ease(EaseExponentialInOut, box RotateTo(2.0, 360.0)));
-    scene.run(id, &rotate);
-
-    println!("Press any key to pause/resume the animation!");
-
     let ref mut gl = Gl::new(opengl);
     let window = RefCell::new(window);
     
@@ -110,8 +83,6 @@ fn main() {
         
         e.press(|key| {
             println!("Key = {}", key);
-            scene.toggle(id, &seq);
-            scene.toggle(id, &rotate);
         });
     }
 }
