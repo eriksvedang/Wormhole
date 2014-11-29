@@ -66,14 +66,10 @@ fn main() {
     );
 
     let mut scene = Scene::new();
-    let tex = Path::new("./Link.png");
-    let tex = Rc::new(Texture::from_path(&tex).unwrap());
-    let mut link_sprite = Sprite::from_texture(tex.clone());
-    link_sprite.set_position(0.0 as f64, 0.0 as f64);
+    // let tex = Path::new("./Link.png");
+    // let tex = Rc::new(Texture::from_path(&tex).unwrap());
     
-    //let link_sprite_id = scene.add_child(link_sprite);
-
-    let image = Texture::from_path(&Path::new("./Link.png")).unwrap();
+    let linkTexture = Texture::from_path(&Path::new("./Link.png")).unwrap();
 
     let window = RefCell::new(window);
     let ref mut gl = Gl::new(opengl);
@@ -108,7 +104,6 @@ fn main() {
         });
 
         e.render(|args| {
-            use graphics::*;
 
             gl.viewport(0, 0, args.width as i32, args.height as i32);
 
@@ -116,23 +111,11 @@ fn main() {
             c.rgb(1.0, 0.9, 1.0).draw(gl);
 
             let (x, y) = game.player.pos;
+            draw_entity(&game.player, &c, &linkTexture, gl);
             //scene.child_mut(link_sprite_id).unwrap().set_position(x as f64, y as f64);
-
-            //scene.draw(&c, gl);
-
-            let h = image.get_height() as f64;
-            
-            c   .image(&image)
-                .trans(x + 3.0, y + h - 0.3 * h)
-                .scale(1.0, 0.3)
-                .rgb(0.5, 0.5, 0.5)
-                .draw(gl);
-                
-            c   .image(&image)
-                .trans(x, y)
-                .draw(gl);
-            
+            //scene.draw(&c, gl);   
         });
+
         
         e.press(|key| {
             //println!("Key = {}", key);
@@ -184,6 +167,23 @@ fn main() {
                 }
             }
         });
+    }
+
+    fn draw_entity( e: &Entity, c: &Context, image: &Texture, gl: &mut Gl) {
+        let (x,y) = e.pos;
+        let (_, h) = image.get_size();
+        let h = h as f64;
+        c   .image(image)
+            .trans(x + 3.0, y + h - 0.3 * h)
+            .scale(1.0, 0.3)
+            .rgb(0.5, 0.5, 0.5)
+            .draw(gl);
+            
+        c   .image(image)
+            .trans(x, y)
+            .draw(gl);
+
+        
     }
 
     fn set_speed_entity(e: &mut Entity, dir: (f64, f64)) {
