@@ -1,4 +1,6 @@
-
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 #![feature(globs)]
 
 extern crate shader_version;
@@ -31,8 +33,26 @@ use opengl_graphics::{
     Texture,
 };
 
+struct Entity {
+    pos: (f32, f32),
+    speed: (f32, f32)
+}
+
+impl Entity {
+    fn new(x: f32, y: f32) -> Entity {
+        Entity {
+            pos: (x, y),
+            speed: (0.0, 0.0)
+        }
+    }
+}
+
+struct Game {
+    player: Entity
+}
+
 fn main() {
-    let (mut width, mut height) = (940, 280);
+    let (mut width, mut height) = (640, 480);
     let opengl = shader_version::opengl::OpenGL_3_2;
     let window = Sdl2Window::new(
         opengl,
@@ -46,21 +66,22 @@ fn main() {
     );
 
     let mut scene = Scene::new();
-    let tex = Path::new("./rust-logo.png");
+    let tex = Path::new("./Link.png");
     let tex = Rc::new(Texture::from_path(&tex).unwrap());
-    let mut sprite = Sprite::from_texture(tex.clone());
-    let mut sprite2 = Sprite::from_texture(tex.clone());
-    sprite.set_position(width as f64 / 2.0, height as f64 / 2.0);
-    sprite2.set_position(0.0, 0.0);
+    let mut link_sprite = Sprite::from_texture(tex.clone());
+    link_sprite.set_position(0.0 as f64, 0.0 as f64);
     
-    let id = scene.add_child(sprite);
-    let id2 = scene.add_child(sprite2);
+    let link_sprite_id = scene.add_child(link_sprite);
 
-    let ref mut gl = Gl::new(opengl);
     let window = RefCell::new(window);
+    let ref mut gl = Gl::new(opengl);
+
+    let mut game = Game {
+        player: Entity::new(0.0, 100.0)
+    };
     
     for e in Events::new(&window) {
-        use event::{ PressEvent, RenderEvent, ResizeEvent };
+        use event::{ PressEvent, ReleaseEvent, RenderEvent, ResizeEvent, UpdateEvent };
 
         scene.event(&e);
 
@@ -68,6 +89,14 @@ fn main() {
             width = w;
             height = h;
             println!("new w = {}, new h = {}", w, h);
+        });
+
+        e.update(|args| {
+            //println!("Update {}", args.dt);
+            let (x, y) = game.player.pos;
+            let (dx, dy) = game.player.speed;
+            let dt = args.dt as f32;
+            game.player.pos = (x + dx * dt, y + dy * dt);
         });
 
         e.render(|args| {
@@ -78,11 +107,45 @@ fn main() {
             let c = Context::abs(args.width as f64, args.height as f64);
             c.rgb(1.0, 0.9, 1.0).draw(gl);
 
+            let (x, y) = game.player.pos;
+            scene.child_mut(link_sprite_id).unwrap().set_position(x as f64, y as f64);
+
             scene.draw(&c, gl);
         });
         
         e.press(|key| {
-            println!("Key = {}", key);
+            //println!("Key = {}", key);
+            match(key) {
+                input::Keyboard( input::keyboard::Key::A ) => {
+                    set_speed_entity(&mut game.player, (-300.0, 0.0))
+                }
+                input::Keyboard( input::keyboard::Key::D ) => {
+                    set_speed_entity(&mut game.player, (300.0, 0.0))
+                }
+                _ => {
+                    println! ("No key match");
+                }
+            }
         });
+
+        e.release(|key| {
+            match(key) {
+                input::Keyboard( input::keyboard::Key::A ) => {
+                    set_speed_entity(&mut game.player, (0.0, 0.0))
+                }
+                input::Keyboard( input::keyboard::Key::D ) => {
+                    set_speed_entity(&mut game.player, (0.0, 0.0))
+                }
+                _ => {
+                    println! ("No key match");
+                }
+            }
+        });
+    }
+
+    fn set_speed_entity(e: &mut Entity, dir: (f32, f32)) {
+        match dir {
+            (dx,dy) => { e.speed = (dx, dy); }
+        }        
     }
 }
